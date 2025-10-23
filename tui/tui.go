@@ -12,11 +12,6 @@ import (
 	"github.com/donnykd/sakugo/model"
 )
 
-func cleanTab(s string) string {
-	// Remove ANSI reset code and then resetForeground
-	return strings.ReplaceAll(s, "\x1b[0m", "") + "\x1b[39m"
-}
-
 type Tui struct {
 	model    *model.Model
 	tabIndex int
@@ -81,10 +76,6 @@ func (t *Tui) renderPage(content string) string {
 	layout := lipgloss.Place(
 		t.model.TerminalWidth, t.model.TerminalHeight, lipgloss.Center, lipgloss.Bottom, fullPane)
 	return layout
-}
-
-func (t *Tui) cleanPostName(name string) string {
-	return strings.TrimSuffix(strings.ReplaceAll(name, "_", " "), " series")
 }
 
 func (t *Tui) postTab(p client.Post) string {
