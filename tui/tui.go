@@ -1,14 +1,12 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	_ "github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/donnykd/sakugo/client"
 	"github.com/donnykd/sakugo/model"
 )
 
@@ -78,24 +76,6 @@ func (t *Tui) renderPage(content string) string {
 	return layout
 }
 
-func (t *Tui) postTab(p client.Post) string {
-	seen := make(map[string]bool)
-	var postNames []string
-	for _, name := range p.Names {
-		if !seen[name.Name] {
-			cleanedName := t.cleanPostName(name.Name)
-			postNames = append(postNames, cleanedName)
-			seen[name.Name] = true
-		}
-	}
-	tabName := strings.Join(postNames, " • ")
-	title := titleStyle.Render(tabName)
-	metadata := lipgloss.NewStyle().Foreground(option).
-		Render(fmt.Sprintf("ID: %d | Score: %d", p.ID, p.Score))
-	tab := lipgloss.JoinVertical(lipgloss.Left, title, metadata)
-	return cleanTab(tab)
-}
-
 func (t *Tui) renderPosts() string {
 	postsList := t.model.Posts
 	var createdTabs []string
@@ -103,7 +83,7 @@ func (t *Tui) renderPosts() string {
 		postStyle := lipgloss.NewStyle().
 			Padding(1).
 			Width(t.model.TerminalWidth - 6)
-		tab := t.postTab(post)
+		tab := t.getPostNames(post)
 		styledTab := postStyle.Render(tab)
 		createdTabs = append(createdTabs, styledTab)
 	}
