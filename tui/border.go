@@ -12,10 +12,6 @@ var (
 		Light: "#FF4757",
 		Dark:  "#FF4757",
 	}
-	title = lipgloss.AdaptiveColor{
-		Light: "#FF4757",
-		Dark:  "#FF4757",
-	}
 	option = lipgloss.AdaptiveColor{
 		Light: "#A4B0BE",
 		Dark:  "#A4B0BE",
@@ -24,7 +20,6 @@ var (
 		Light: "#222222",
 		Dark:  "#222222",
 	}
-	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(title)
 	paneBorder = lipgloss.Border{
 		Top:         "─",
 		Bottom:      "─",
@@ -40,7 +35,7 @@ var (
 		Right: "☽",
 	}
 	pane = lipgloss.NewStyle().
-		Border(paneBorder, true).BorderForeground(highlight).Padding(0, 2).BorderBackground(bg)
+		Border(paneBorder, true).BorderForeground(highlight).BorderBackground(bg)
 )
 
 type borderPosition int

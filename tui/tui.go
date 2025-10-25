@@ -1,7 +1,7 @@
 package tui
 
 import (
-	_"strings"
+	_ "strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
@@ -11,10 +11,10 @@ import (
 )
 
 type Tui struct {
-	model    *model.Model
-	tabIndex int
-	spinner  spinner.Model
-	postsTable  table.Model
+	model      *model.Model
+	tabIndex   int
+	spinner    spinner.Model
+	postsTable table.Model
 }
 
 func NewTui(m *model.Model) *Tui {
@@ -26,11 +26,13 @@ func NewTui(m *model.Model) *Tui {
 
 func (t *Tui) Init() tea.Cmd {
 	t.model.SetPosts()
-	t.postsTable = createTable(t.model.Posts, t.model.TerminalWidth - 2, t.model.TerminalHeight - 5)
+	t.postsTable = createTable(t.model.Posts, t.model.TerminalWidth, t.model.TerminalHeight-6)
 	return nil
 }
 
 func (t *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		t.model.TerminalHeight = msg.Height
@@ -41,12 +43,15 @@ func (t *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if t.model.TerminalHeight < 20 {
 			t.model.TerminalHeight = 20
 		}
-		
-		t.postsTable = createTable(t.model.Posts, t.model.TerminalWidth - 2, t.model.TerminalHeight - 5)
+
+		t.postsTable = createTable(t.model.Posts, t.model.TerminalWidth, t.model.TerminalHeight-6)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return t, tea.Quit
+		default:
+			t.postsTable, cmd = t.postsTable.Update(msg)
+			return t, cmd
 		}
 	}
 	return t, nil
@@ -72,8 +77,8 @@ func (t *Tui) renderSearchBar() string {
 func (t *Tui) renderPosts() string {
 	tableView := t.postsTable.View()
 	centeredContent := lipgloss.NewStyle().Width(t.model.TerminalWidth).
-	AlignHorizontal(lipgloss.Top).Render(tableView)
-		
+		AlignHorizontal(lipgloss.Top).Render(tableView)
+
 	posts := t.renderPage(centeredContent)
 	return posts
 }
