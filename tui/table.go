@@ -41,18 +41,21 @@ func createTable(posts []client.Post, terminalWidth, terminalHeight int) table.M
 			fmt.Sprintf("%v", i+1),
 			postName,
 			fmt.Sprintf("%v", post.ID),
-			fmt.Sprintf("%v", post.ID),
+			fmt.Sprintf("%v", post.Score),
 		})
 	}
 
 	style := table.DefaultStyles()
-	style.Header = style.Header.Background(bg).Border(paneBorder, false, false, true, false)
-	style.Cell = style.Cell.Padding(1)
+	
+	style.Header = style.Header.Background(bg).Foreground(highlight).
+		Border(paneBorder, false, false, true, false).
+		BorderForeground(highlight).BorderBackground(bg)
+	
 	style.Selected = style.Selected.
-    	Background(lipgloss.Color("#57534e")).
-     	Foreground(lipgloss.Color("#ffffff"))
-
-	t := table.New(
+			Background(lipgloss.Color("#57534e")).
+			Foreground(lipgloss.Color(highlight.Light))
+	
+		t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),

@@ -9,7 +9,7 @@ import (
 
 var (
 	highlight = lipgloss.AdaptiveColor{
-		Light: "#FF4757",
+		Light: "#FF7E89",
 		Dark:  "#FF4757",
 	}
 	option = lipgloss.AdaptiveColor{
