@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/donnykd/sakugo/model"
+	"github.com/donnykd/sakugo/player"
 )
 
 type Tui struct {
@@ -15,6 +16,7 @@ type Tui struct {
 	tabIndex   int
 	spinner    spinner.Model
 	postsTable table.Model
+	player     *player.Player
 }
 
 func NewTui(m *model.Model) *Tui {
@@ -27,12 +29,13 @@ func NewTui(m *model.Model) *Tui {
 func (t *Tui) Init() tea.Cmd {
 	t.model.SetPosts()
 	t.postsTable = createTable(t.model.Posts, t.model.TerminalWidth, t.model.TerminalHeight-6)
+	t.player = player.NewPlayer()
 	return nil
 }
 
 func (t *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		t.model.TerminalHeight = msg.Height
@@ -49,6 +52,10 @@ func (t *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return t, tea.Quit
+		case "enter":
+			t.player.LoadFile("https://www.w3schools.com/html/mov_bbb.mp4")
+			t.model.ViewState = model.PlayingView
+			return t, tea.ClearScreen
 		default:
 			t.postsTable, cmd = t.postsTable.Update(msg)
 			return t, cmd
@@ -61,6 +68,8 @@ func (t *Tui) View() string {
 	switch t.model.ViewState {
 	case model.PostsView:
 		return t.renderPosts()
+	case model.PlayingView:
+		return ""
 	}
 	return ""
 }

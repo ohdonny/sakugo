@@ -1,123 +1,68 @@
 package player
 
 import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"net"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
 )
 
-type Connection struct {
-	client     net.Conn
-	socketPath string
-	error      string
-	events     chan Event
+type Player struct {
+	socket string
+	conn   *connection
 }
 
-type CommandRequest struct {
-	Command []any `json:"command"`
-}
+func NewPlayer() (p *Player) {
+	socket := "/tmp/mpv_rpc"
+	var conn *connection
+	var cmd *exec.Cmd
 
-type CommandResponse struct {
-	Error string `json:"error"`
-	Data  any    `json:"data"`
-}
-
-type Event struct {
-	Name   string `json:"event"`
-	Reason string `json:"reason"`
-}
-
-func InitConnection(socketPath string) *Connection {
-	return &Connection{
-		socketPath: socketPath,
-		events:     make(chan Event, 1),
+	if !mpvExists() {
+		log.Fatal("mpv not installed on this machine")
 	}
-}
 
-func (c *Connection) Open() error {
-	if c.client != nil {
-		return fmt.Errorf("client already open")
+	if supportsKittyProtocol() {
+		cmd = exec.Command("mpv", "--vo=kitty", "--idle", "--input-ipc-server="+socket)
+	} else {
+		cmd = exec.Command("mpv", "--idle", "--input-ipc-server="+socket)
 	}
-	client, err := net.Dial("unix", c.socketPath)
+
+	err := cmd.Start()
 	if err != nil {
-		return fmt.Errorf("could not find path to MPV")
-	}
-	c.client = client
-
-	go c.listen()
-	return nil
-}
-
-func (c *Connection) Close() error {
-	err := c.client.Close()
-	c.client = nil
-	return err
-}
-
-func (c *Connection) LoadFile(url string) error {
-	return c.sendRequest("loadfile", url)
-}
-
-func (c *Connection) Stop() error {
-	return c.sendRequest("stop")
-}
-
-func (c *Connection) Quit() error {
-	return c.sendRequest("quit")
-}
-
-func (c *Connection) sendRequest(commands ...any) error {
-	message := CommandRequest{
-		Command: commands,
+		log.Fatal(err)
 	}
 
-	data, err := json.Marshal(message)
+	conn = InitConnection(socket)
+
+	err = conn.Open()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	data = append(data, '\n')
-	_, err = c.client.Write(data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Connection) readEvent(data []byte) {
-	var event Event
-
-	err := json.Unmarshal(data, &event)
-
-	if err != nil {
-		return
-	}
-
-	if event.Name == "end-file" {
-		c.events <- event
+	return &Player{
+		socket: socket,
+		conn:   conn,
 	}
 }
 
-func (c *Connection) readResponse(data []byte) {
-	var response CommandResponse
-	err := json.Unmarshal(data, &response)
-
-	if err != nil {
-		return
-	}
-
-	if response.Error == "" || response.Error == "success" {
-		return
-	}
+func (p *Player) LoadFile(url string) error {
+	return p.conn.sendRequest("loadfile", url)
 }
 
-func (c *Connection) listen() {
-	scanner := bufio.NewScanner(c.client)
-	for scanner.Scan() {
-		data := scanner.Bytes()
-		c.readEvent(data)
-		c.readResponse(data)
-	}
+func (p *Player) Stop() error {
+	return p.conn.sendRequest("stop")
+}
+
+func (p *Player) Quit() error {
+	return p.conn.sendRequest("quit")
+}
+
+func mpvExists() bool {
+	_, err := exec.LookPath("mpv")
+	return err == nil
+}
+
+func supportsKittyProtocol() bool {
+	term := os.Getenv("TERM")
+	return strings.Contains(term, "kitty")
 }

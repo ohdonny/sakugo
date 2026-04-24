@@ -13,6 +13,7 @@ type ViewState int
 const (
 	LoadingView ViewState = iota
 	PostsView
+	PlayingView
 	ErrorView
 )
 
